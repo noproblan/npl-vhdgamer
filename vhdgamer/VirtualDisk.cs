@@ -15,13 +15,13 @@ using System.Text;
 using System.Threading;
 using System.Management;
 
-namespace VhdGamer.Gaming
+namespace Medo.IO
 {
 
     /// <summary>
     /// Manipulation with Virtual Disk files.
     /// </summary>
-    internal class VirtualDisk : IDisposable
+    public class VirtualDisk : IDisposable
     {
 
         private NativeMethods.VirtualDiskSafeHandle _handle = new NativeMethods.VirtualDiskSafeHandle();

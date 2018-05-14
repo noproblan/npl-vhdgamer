@@ -2,48 +2,31 @@
 using System.Drawing;
 using System.Windows.Forms;
 using System.IO;
+using System.Diagnostics;
 using System.Reflection;
-using VhdGamer.Gaming;
-using VhdGamer.Communication;
-using System.Collections.Generic;
 
-namespace VhdGamer.LegacyGui
+namespace vhdgamer
 {
     public class SysTrayApp : Form
     {
-        private GamesLibrary gamesLibrary;
-        private Lobby lobby;
-        private Timer announcingTimer;
-
         public static NotifyIcon trayIcon;
         private ContextMenu trayMenu;
 
+        Medo.IO.VirtualDisk _disk;
+        public static IntPtr runningGameHandle;
+
         public SysTrayApp()
         {
+
             // create vhdpath directory, if it doesnt exist
-            String localVhdBasePath = Path.Combine(Application.StartupPath, Options.vhdlocalpath);
-            if (!Directory.Exists(localVhdBasePath))
+            if (!Directory.Exists(Application.StartupPath + @"\" + Options.vhdlocalpath))
             {
-                Directory.CreateDirectory(localVhdBasePath);
+                Directory.CreateDirectory(Application.StartupPath + @"\" + Options.vhdlocalpath);
             }
-            gamesLibrary = new GamesLibrary(new VhdStorage(new DirectoryInfo(localVhdBasePath)));
 
-            lobby = new Lobby();
-            lobby.Listen();
-
-            /******************************************************************************************
-             * Announce Own Games every 10s
-             *****************************************************************************************/
-            this.announcingTimer = new Timer();
-            this.announcingTimer.Interval = Options.ANNOUNCING_INTERVAL;
-            this.announcingTimer.Tick += delegate(object o, EventArgs e) {
-                lobby.Send(new AnnouncementMessage(new UserInfo(Options.nickname), gamesLibrary.GetGameNames()));
-            };
-            this.announcingTimer.Start();
-
-            /******************************************************************************************
-             * GUI Init
-             *****************************************************************************************/
+            // Create a tray icon. In this example we use a
+            // standard system icon for simplicity, but you
+            // can of course use your own custom icon too.
             trayIcon = new NotifyIcon();
             trayIcon.Text = "vhdgamer";
             trayIcon.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
@@ -68,23 +51,18 @@ namespace VhdGamer.LegacyGui
             trayMenu.MenuItems.Clear();
 
             // get all games and add them to the context menu
-            foreach (String gameName in gamesLibrary.GetGameNames())
+            DirectoryInfo di = new DirectoryInfo(Application.StartupPath + @"\" + Options.vhdlocalpath);
+            foreach (FileInfo fi in di.GetFiles("*.vhd"))
             {
-                trayMenu.MenuItems.Add(Path.GetFileNameWithoutExtension(gameName), trayMenu_Click); // remove vhd extension
+                trayMenu.MenuItems.Add(Path.GetFileNameWithoutExtension(fi.Name), trayMenu_Click); // remove vhd extension
             };
 
             // Downloader
             trayMenu.MenuItems.Add("-");
             trayMenu.MenuItems.Add("Downloader...", OnShowDownloader);
-
             // Deleter
             trayMenu.MenuItems.Add("-");
             trayMenu.MenuItems.Add("Clean Up...", OnShowDeleter);
-
-            // Lobby
-            trayMenu.MenuItems.Add("-");
-            trayMenu.MenuItems.Add("Chat (EXPERIMENTAL)...", OnShowLobby);
-
             // Exit button
             trayMenu.MenuItems.Add("-");
             trayMenu.MenuItems.Add("Exit", OnExit);
@@ -93,9 +71,18 @@ namespace VhdGamer.LegacyGui
         // handles a click on a game entry (then mounts and starts)
         private void trayMenu_Click(object sender, EventArgs e)
         {
+            if (runningGameHandle.ToInt32() != 0)
+            {
+                MessageBox.Show("It's not recommenced to start more than one game at a time!");
+            }
+
+            String path = Application.StartupPath + @"\" + Options.vhdlocalpath + @"\" + (sender as MenuItem).Text + @".vhd"; // add vhd extension
+
             Cursor.Current = Cursors.WaitCursor;
-            gamesLibrary.Play((sender as MenuItem).Text + @".vhd");
+            trayIcon.ShowBalloonTip(1000, "vhdgamer", "Mounting \"" + (sender as MenuItem).Text + "\"...", ToolTipIcon.Info);
+            mount(new FileInfo(path));
             trayIcon.ShowBalloonTip(1000, "vhdgamer", "Starting \"" + (sender as MenuItem).Text + "\"...", ToolTipIcon.Info);
+            play();
             Cursor.Current = Cursors.Default;
         }
 
@@ -118,30 +105,26 @@ namespace VhdGamer.LegacyGui
 
         private void SysTrayApp_FormClosing(object sender, FormClosingEventArgs e)
         {
+            if (this._disk != null) { this._disk.Close(); }
             Application.Exit();
         }
 
         private void OnShowDownloader(object sender, EventArgs e)
         {
-            DownloaderForm modalForm = new DownloaderForm();
+            downloaderForm modalForm = new downloaderForm();
             modalForm.ShowDialog(this);
         }
 
         private void OnShowDeleter(object sender, EventArgs e)
         {
-            DeleterForm modalForm = new DeleterForm();
-            modalForm.ShowDialog(this);
-        }
-
-        private void OnShowLobby(object sender, EventArgs e)
-        {
-            LobbyForm modalForm = new LobbyForm(lobby);
+            deleterForm modalForm = new deleterForm();
             modalForm.ShowDialog(this);
         }
 
         private void OnExit(object sender, EventArgs e)
         {
-            System.Windows.Forms.Application.Exit();
+            if (this._disk != null) { this._disk.Close(); }
+            Application.Exit();
         }
 
         protected override void Dispose(bool isDisposing)
@@ -149,5 +132,36 @@ namespace VhdGamer.LegacyGui
             if (isDisposing) { trayIcon.Dispose(); }
             base.Dispose(isDisposing);
         }
+
+        public void mount(FileInfo fi)
+        {
+            // open
+            if (this._disk != null) { this._disk.Close(); }
+            this._disk = new Medo.IO.VirtualDisk(fi.FullName);
+            this._disk.Open();
+
+            // attach
+            if (this._disk == null) { return; }
+            this._disk.Attach(Medo.IO.VirtualDiskAttachOptions.None);
+        }
+
+        public void umount(FileInfo fi)
+        {
+            // detach
+            if (this._disk == null) { return; }
+            this._disk.Detach();
+        }
+
+        public void play()
+        {
+            string startpath = System.IO.File.ReadAllText(this._disk.GetDriveLetter() + @"\" + Options.starterfilename);
+
+            ProcessStartInfo startInfo = new ProcessStartInfo(this._disk.GetDriveLetter() + @"\" + startpath);
+            startInfo.WorkingDirectory = Path.GetDirectoryName(this._disk.GetDriveLetter() + @"\" + startpath);
+            Process P = Process.Start(startInfo);
+            runningGameHandle = P.Handle;
+            P.WaitForExit();
+        }
+
     }
 }

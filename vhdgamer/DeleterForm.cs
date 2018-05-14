@@ -3,75 +3,63 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
-using System.IO;
-using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using VhdGamer.Gaming;
+using System.IO;
+using Microsoft.VisualBasic.FileIO;
 
-namespace VhdGamer.LegacyGui
+namespace vhdgamer
 {
-    public partial class DeleterForm : Form
+    public partial class deleterForm : Form
     {
-        private VhdStorage localStorage;
-
-        public DeleterForm()
+        public deleterForm()
         {
-            localStorage = new VhdStorage(new DirectoryInfo(Options.vhdlocalpath));
             InitializeComponent();
         }
 
-        private void DeleterForm_Load(object sender, EventArgs e)
+        private void closeDownloaderButton_Click(object sender, EventArgs e)
         {
-            Cursor.Current = Cursors.WaitCursor;
-
-            // Check Local Storage
-            if (!localStorage.Location.Exists)
-            {
-                Cursor.Current = Cursors.Default;
-                MessageBox.Show("Lokales Pfad \"" + localStorage.Location.FullName + "\" nicht erreichbar.");
-                return;
-            }
-
-            // Do the work
-            updateGamelist();
-            Cursor.Current = Cursors.Default;
-        }
-
-        /// <summary>
-        /// Update the ListView containing serverside Vhd names. Local Vhds are checked.
-        /// </summary>
-        private void updateGamelist()
-        {
-            gameList.Enabled = false;
-            gameList.Sorted = false;
-            gameList.Items.Clear();
-
-            ICollection<String> localVhdNames = localStorage.GetVhdNames();
-
-            // Add local Vhds to list
-            foreach (String s in localVhdNames)
-            {
-                gameList.Items.Add(s);
-            }
-
-            gameList.Sorted = true;
-            gameList.Enabled = true;
+            Close();
         }
 
         private void deleteButton_Click(object sender, EventArgs e)
         {
-            string basepath = localStorage.Location.FullName;
-            foreach (String vhdname in gameList.CheckedItems)
+            gameList.Enabled = false;
+            foreach (FileInfo filocal in gameList.CheckedItems)
             {
-                File.Delete(Path.Combine(basepath, vhdname));
+                string localfilename = Application.StartupPath + @"\" + Options.vhdlocalpath + @"\" + filocal.Name;
+                if (File.Exists(localfilename))
+                {
+                    FileSystem.DeleteFile(localfilename);
+                }
             }
-            updateGamelist();
+            updateGameList();
+            gameList.Enabled = true;
         }
 
-        private void cancelDeletionButton_Click(object sender, EventArgs e)
+        private void deleterForm_Load(object sender, EventArgs e)
         {
-            Close();
+            updateGameList();
         }
+
+        private void updateGameList()
+        {
+            gameList.Enabled = false;
+            Cursor.Current = Cursors.WaitCursor;
+            gameList.Sorted = false;
+            gameList.Items.Clear();
+
+            DirectoryInfo localdir = new DirectoryInfo(Application.StartupPath + @"\" + Options.vhdlocalpath);
+            FileInfo[] finfos = localdir.GetFiles("*.vhd");
+            foreach (FileInfo filocal in localdir.GetFiles("*.vhd"))
+            {
+                gameList.Items.Add(filocal);
+            }
+
+            gameList.Sorted = true;
+            Cursor.Current = Cursors.Default;
+            gameList.Enabled = true;
+        }
+
     }
 }

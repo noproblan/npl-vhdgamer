@@ -6,47 +6,20 @@ using System.Drawing;
 using System.Text;
 using System.Windows.Forms;
 using System.IO;
-using System.Diagnostics;
-using VhdGamer.Gaming;
+using Microsoft.VisualBasic.FileIO;
 
-namespace VhdGamer.LegacyGui
+namespace vhdgamer
 {
-    public partial class DownloaderForm : Form
+    public partial class downloaderForm : Form
     {
-        private VhdStorage localStorage, serverStorage;
-
-        public DownloaderForm()
+        public downloaderForm()
         {
-            serverStorage = new VhdStorage(new DirectoryInfo(Options.vhdserverpath));
-            localStorage = new VhdStorage(new DirectoryInfo(Options.vhdlocalpath));
             InitializeComponent();
         }
 
-
         private void downloaderForm_Load(object sender, EventArgs e)
         {
-            Cursor.Current = Cursors.WaitCursor;
-
-            // Check Local Storage
-            if (!localStorage.Location.Exists)
-            {
-                Cursor.Current = Cursors.Default;
-                MessageBox.Show("Lokales Pfad \"" + localStorage.Location.FullName + "\" nicht erreichbar.");
-                return;
-            }
-
-            // Check Server Connection
-            SysTrayApp.trayIcon.ShowBalloonTip(20, "vhdgamer", "Connecting to Server...", ToolTipIcon.Info);
-            if (!serverStorage.Location.Exists)
-            {
-                Cursor.Current = Cursors.Default;
-                MessageBox.Show("Serverpfad \"" + serverStorage.Location.FullName + "\" nicht erreichbar.");
-                return;
-            }
-
-            // Do the work
             updateGamelist();
-            Cursor.Current = Cursors.Default;
         }
 
         private void closeDownloaderButton_Click(object sender, EventArgs e)
@@ -57,48 +30,68 @@ namespace VhdGamer.LegacyGui
         private void syncButton_Click(object sender, EventArgs e)
         {
             gameList.Enabled = false;
-            
-            // All checked items are to be synchronized
-            ICollection<String> filter = new List<String>();
-            foreach (String s in gameList.CheckedItems) 
+            foreach (FileInfo fiserver in gameList.CheckedItems)
             {
-                filter.Add(s);
+                string localfilename = Application.StartupPath + @"\" + Options.vhdlocalpath + @"\" + fiserver.Name;
+                if (!File.Exists(localfilename))
+                {
+                    //fiserver.CopyTo(localfilename); // has no progess bar
+                    try
+                    {
+                        FileSystem.CopyFile(fiserver.FullName, localfilename, UIOption.AllDialogs);
+                    }
+                    catch (System.OperationCanceledException)
+                    {
+                        updateGamelist();
+                        gameList.Enabled = true;
+                        return;
+                    }
+                }
             }
-
-            // Synchronize checked items from server to local
-            localStorage.Syncronize(serverStorage, filter);
 
             // notification indicating finished download
             SysTrayApp.trayIcon.ShowBalloonTip(1000, "vhdgamer", "Downloads finished.", ToolTipIcon.Info);
             gameList.Enabled = true;
         }
 
-        /// <summary>
-        /// Update the ListView containing serverside Vhd names. Local Vhds are checked.
-        /// </summary>
         private void updateGamelist()
         {
             gameList.Enabled = false;
+            Cursor.Current = Cursors.WaitCursor;
             gameList.Sorted = false;
             gameList.Items.Clear();
 
-            // Name lists as cache, though we don't need to retrieve it every iteration
-            ICollection<String> localVhdNames = localStorage.GetVhdNames();
-            ICollection<String> serverVhdNames = serverStorage.GetVhdNames();
+            DirectoryInfo localdir = new DirectoryInfo(Application.StartupPath + @"\" + Options.vhdlocalpath);
+            DirectoryInfo serverdir = new DirectoryInfo(Options.vhdserverpath);
 
-            // Add serverside Vhds to list
-            foreach (String s in serverVhdNames)
+            // if the server directory doesn't exists or isn't reachable
+            SysTrayApp.trayIcon.ShowBalloonTip(20, "vhdgamer", "Connecting to Server...", ToolTipIcon.Info);
+            if (!serverdir.Exists)
             {
-                gameList.Items.Add(s);
-                if (localVhdNames.Contains(s)) // check if it already exists locally
+                MessageBox.Show("Serverpfad \"" + serverdir.FullName + "\" nicht erreichbar.");
+                Close();
+                this.Cursor = Cursors.Default;
+                return;
+            }
+
+            FileInfo[] finfos = localdir.GetFiles("*.vhd");
+            foreach (FileInfo fiserver in serverdir.GetFiles("*.vhd"))
+            {
+                gameList.Items.Add(fiserver);
+                foreach (FileInfo ficlient in finfos)
                 {
-                    gameList.SetItemChecked(gameList.Items.Count - 1, true);
+                    // check if a vhd is already on the users hd (if yes, check it)
+                    if (ficlient.Name == fiserver.Name)
+                    {
+                        // mark last inserted element
+                        gameList.SetItemChecked(gameList.Items.Count - 1, true);
+                    }
                 }
             }
 
             gameList.Sorted = true;
+            Cursor.Current = Cursors.Default;
             gameList.Enabled = true;
         }
-
     }
 }

@@ -1,15 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{EB6349BA-6F56-4776-A8CA-3B8ADF4A6786}</ProjectGuid>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>8.0.30703</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{60FC1FB5-7090-4837-92F6-DDA1A28EEB00}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>VhdGamer</RootNamespace>
+    <RootNamespace>vhdgamer</RootNamespace>
     <AssemblyName>vhdgamer</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
@@ -26,9 +27,10 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkProfile />
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -37,8 +39,8 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <PlatformTarget>x86</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -50,58 +52,49 @@
     <ApplicationIcon>Actions-roll.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
+    <StartupObject>vhdgamer.Program</StartupObject>
+  </PropertyGroup>
+  <PropertyGroup />
+  <PropertyGroup />
+  <PropertyGroup />
+  <PropertyGroup>
     <ApplicationManifest>vhdgamer.exe.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Management" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
     <Reference Include="System.Deployment" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Management" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AnnouncementMessage.cs" />
-    <Compile Include="ChatTabPage.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="CurrentMillis.cs" />
-    <Compile Include="DeleterForm.cs">
+    <Compile Include="downloaderForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="DeleterForm.Designer.cs">
-      <DependentUpon>DeleterForm.cs</DependentUpon>
+    <Compile Include="downloaderForm.Designer.cs">
+      <DependentUpon>downloaderForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="DownloaderForm.cs">
+    <Compile Include="deleterForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="DownloaderForm.designer.cs">
-      <DependentUpon>DownloaderForm.cs</DependentUpon>
-    </Compile>
-    <Compile Include="LobbyForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="LobbyForm.designer.cs">
-      <DependentUpon>LobbyForm.cs</DependentUpon>
+    <Compile Include="deleterForm.Designer.cs">
+      <DependentUpon>deleterForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Options.cs" />
-    <Compile Include="Program.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SysTrayApp.cs">
       <SubType>Form</SubType>
     </Compile>
-    <EmbeddedResource Include="DeleterForm.resx">
-      <DependentUpon>DeleterForm.cs</DependentUpon>
+    <Compile Include="VirtualDisk.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="downloaderForm.resx">
+      <DependentUpon>downloaderForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="DownloaderForm.resx">
-      <DependentUpon>DownloaderForm.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="LobbyForm.resx">
-      <DependentUpon>LobbyForm.cs</DependentUpon>
+    <EmbeddedResource Include="deleterForm.resx">
+      <DependentUpon>deleterForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -116,6 +109,7 @@
     <EmbeddedResource Include="SysTrayApp.resx">
       <DependentUpon>SysTrayApp.cs</DependentUpon>
     </EmbeddedResource>
+    <None Include="app.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -131,19 +125,6 @@
     <Content Include="Actions-roll.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Communication\VhdGamer.Communication.csproj">
-      <Project>{32aaaab8-57cf-4fa0-9b1a-6630b236a043}</Project>
-      <Name>VhdGamer.Communication</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\VhdGaming\VhdGamer.Gaming.csproj">
-      <Project>{eed9d11e-d73f-4e07-8489-50fce2c7f914}</Project>
-      <Name>VhdGamer.Gaming</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="lib\" />
-  </ItemGroup>
-  <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
       <Visible>False</Visible>
       <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
@@ -154,8 +135,17 @@
       <ProductName>.NET Framework 3.5 SP1</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>
+    </PostBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

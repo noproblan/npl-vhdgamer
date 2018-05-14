@@ -1,17 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using System.Windows.Forms;
-using VhdGamer.LegacyGui;
+using Medo.IO;
+using System.Diagnostics;
+using System.Collections;
+using System.Threading;
 
-namespace VhdGamer
+namespace vhdgamer
 {
     static class Program
     {
         // for checking if application already started
         private static Mutex AppMutex = new Mutex(false, "MainApp");
 
+        /// <summary>
+        /// Der Haupteinstiegspunkt für die Anwendung.
+        /// </summary>
         [STAThread]
         static void Main()
         {
